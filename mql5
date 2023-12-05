@@ -1,0 +1,93 @@
+
+//+------------------------------------------------------------------+
+//|                                          The Greedy Gold Digger  |
+//|                            Developer's site: forexroboteasy.com  |
+//|                                      Developed by: Forex Robot Easy Team  |
+//|------------------------------------------------------------------|
+//|                                             Technical Specification |
+//|------------------------------------------------------------------|
+//| 1. Trading algorithm based on trend in the gold market             |
+//| 2. Lot multiplication strategy to recover losses                  |
+//| 3. Optimized for XAUUSD (Gold) symbol                              |
+//| 4. Plug-and-play model with minimal setup                          |
+//| 5. Recommended setup and parameters provided                       |
+//| 6. Demo account testing before live trading                        |
+//| 7. Essential trading functions included in the code                |
+//|------------------------------------------------------------------+
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <MovingAverages\MovingAverages.mqh>
+
+// Define constants
+#define SYMBOL_NAME 'XAUUSD'
+#define TRADE_VOLUME 0.01
+#define STOP_LOSS 100
+#define TAKE_PROFIT 200
+
+// Initialize global variables
+CTrade trade;
+CMovingAverages ma;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    trade.SetExpertMagicNumber(123456); // Set expert magic number
+    trade.SetDeviationInPoints(10); // Set deviation in points
+    
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Perform any necessary cleanup tasks
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    double maValue = ma.iMA(SYMBOL_NAME, PERIOD_H1, 14, 0, MODE_SMA, PRICE_CLOSE, 0);
+    double currentPrice = SymbolInfoDouble(SYMBOL_NAME, SYMBOL_ASK);
+
+    // Check if there is an existing open position
+    if (trade.PositionSelect(SYMBOL_NAME))
+    {
+        // Close position if price crosses below moving average
+        if (currentPrice < maValue)
+        {
+            trade.PositionClose(SYMBOL_NAME);
+            Print('Closed sell position at ', currentPrice);
+        }
+    }
+    else
+    {
+        // Open buy position if price crosses above moving average
+        if (currentPrice > maValue)
+        {
+            trade.Buy(SYMBOL_NAME, TRADE_VOLUME, currentPrice, STOP_LOSS, TAKE_PROFIT);
+            Print('Opened buy position at ', currentPrice);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Program entry point                                               |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+    // Start the trading algorithm
+    OnTick();
+    
+    // Wait for user input to end the program
+    while (!IsStopped())
+    {
+        Sleep(1000);
+    }
+}
